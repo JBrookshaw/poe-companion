@@ -1,0 +1,30 @@
+package com.poe2.client
+
+import com.poe2.config.GithubConfiguration
+import io.micronaut.core.type.Argument
+import io.micronaut.http.HttpHeaders.ACCEPT
+import io.micronaut.http.HttpHeaders.USER_AGENT
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.uri.UriBuilder
+import jakarta.inject.Singleton
+import org.reactivestreams.Publisher
+import java.net.URI
+
+@Singleton
+class GithubClient(@param:Client(id = "github") private val httpClient: HttpClient,
+                           configuration: GithubConfiguration) {
+    private val uri: URI = UriBuilder.of("/repos")
+            .path(configuration.organization)
+            .path(configuration.repo)
+            .path("releases")
+            .build()
+
+    fun fetchReleases(): Publisher<List<GithubRelease>> {
+        val req: HttpRequest<*> = HttpRequest.GET<Any>(uri)
+                .header(USER_AGENT, "Micronaut HTTP Client")
+                .header(ACCEPT, "application/vnd.github.v3+json, application/json")
+        return httpClient.retrieve(req, Argument.listOf(GithubRelease::class.java))
+    }
+}
